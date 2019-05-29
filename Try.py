@@ -10,21 +10,19 @@ def softmax(x):
     return np.exp(x) / np.sum(np.exp(x), axis=0)
 
 
-def initialize_parameters(n_x, n_h, n_y):
-    W1 = np.random.randn(n_h, n_x) * 0.01
-    b1 = np.random.rand(n_h, 1)
-    W2 = np.random.randn(n_y, n_h) * 0.01
-    b2 = np.random.rand(n_y, 1)
+def sgn(x):
+    return 1 if x > 0 else -1
+
+
+def initialize_parameters(n_x, n_h, n_y, L):
+    W1 = np.random.randint(-L, L+1, (n_h, n_x))
+    W2 = np.random.randint(-L, L+1, (n_y, n_h))
 
     print("W1 ========= {}".format(W1))
     print("W2 ========= {}".format(W2))
-    print("b1 ========= {}".format(b1))
-    print("b2 ========= {}".format(b2))
 
     parameters = {"W1": W1,
-                  "b1": b1,
-                  "W2": W2,
-                  "b2": b2}
+                  "W2": W2}
 
     return parameters
 
@@ -136,5 +134,5 @@ def nn_model(X, n_y, n_h, num_iterations=1000, print_cost=False):
     return parameters_for_first_thread, parameters_for_second_thread, Y1, Y2
 
 
-model = nn_model(np.random.randn(5, 2), 4, 2)
+model = nn_model(np.random.randint(-1, 2, (3, 5)), 3, 1)
 print(model)
