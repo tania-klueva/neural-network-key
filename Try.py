@@ -129,10 +129,6 @@ def nn_model(X, n_y, n_h, num_iterations=1000, print_cost=False):
     for i in range(0, num_iterations):
         Y1, parameters_for_first_thread = compute_iteration(X, Y1, Y2, parameters_for_first_thread)
         Y2, parameters_for_second_thread = compute_iteration(X, Y2, Y1, parameters_for_second_thread)
-        # thread1 = threading.Thread(target=compute_iteration, args=(X, Y1, Y2, parameters_for_first_thread))
-        # thread2 = threading.Thread(target=compute_iteration, args=(X, Y2, Y1, parameters_for_second_thread))
-        # thread1.start()
-        # thread2.start()
     return parameters_for_first_thread, parameters_for_second_thread, Y1, Y2
 
 
