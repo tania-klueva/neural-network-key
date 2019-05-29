@@ -54,8 +54,6 @@ def compute_cost(A2, Y):
     logs = np.multiply(np.log(A2), Y) + np.multiply(np.log(1 - A2), 1 - Y)
     cost = - np.sum(logs) / m
 
-    cost = np.squeeze(cost)
-
     return cost
 
 
@@ -104,21 +102,20 @@ def update_parameters(parameters, grads, learning_rate=1.2):
     return parameters
 
 
-def compute_iteration(X, current_Y, desired_Y, parameters):
+def compute_iteration(X, desired_Y, parameters, i):
     A2, cache = forward_propagation(X, parameters)
 
     cost = compute_cost(A2, desired_Y)
-    print("Cost now = {}".format(cost))
+    if i % 1000 == 0:
+        print("Cost after iteration %i: %f" % (i, cost))
 
-    if cost.any() > 0:
-        grads = backward_propagation(parameters, cache, X, desired_Y)
-        parameters = update_parameters(parameters, grads)
+    grads = backward_propagation(parameters, cache, X, desired_Y)
+    parameters = update_parameters(parameters, grads)
 
-    current_Y = A2
-    return current_Y, parameters
+    return A2, parameters
 
 
-def nn_model(X, n_y, n_h, num_iterations=1000, print_cost=False):
+def nn_model(X, n_y, n_h, num_iterations=100000):
     n_x = X.shape[0]
 
     parameters_for_first_thread = initialize_parameters(n_x, n_h, n_y)
@@ -127,10 +124,13 @@ def nn_model(X, n_y, n_h, num_iterations=1000, print_cost=False):
     Y1, cache = forward_propagation(X, parameters_for_first_thread)
     Y2, cache = forward_propagation(X, parameters_for_second_thread)
     for i in range(0, num_iterations):
-        Y1, parameters_for_first_thread = compute_iteration(X, Y1, Y2, parameters_for_first_thread)
-        Y2, parameters_for_second_thread = compute_iteration(X, Y2, Y1, parameters_for_second_thread)
+        Y1, parameters_for_first_thread = compute_iteration(X, Y2, parameters_for_first_thread, i)
+        Y2, parameters_for_second_thread = compute_iteration(X, Y1, parameters_for_second_thread, i)
     return parameters_for_first_thread, parameters_for_second_thread, Y1, Y2
 
 
-model = nn_model(np.random.randn(5, 2), 4, 2)
-print(model)
+parameters_for_first_thread, parameters_for_second_thread, Y1, Y2 = nn_model(np.random.randn(5, 3), 1, 3)
+print("Y1 result value = {}".format(Y1))
+print("Y2 result value = {}".format(Y2))
+print("Param1 result value = {}".format(parameters_for_first_thread))
+print("Param2 result value = {}".format(parameters_for_second_thread))
