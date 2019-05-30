@@ -1,5 +1,4 @@
 import numpy as np
-import threading
 
 
 def sigmoid(x, derivative=False):
@@ -10,31 +9,50 @@ def softmax(x):
     return np.exp(x) / np.sum(np.exp(x), axis=0)
 
 
-def initialize_parameters(n_x, n_h, n_y, L):
-    W1 = np.random.randint(-L, L + 1, (n_h, n_x))
-    W2 = np.random.randint(-L, L + 1, (n_y, n_h))
-
-    parameters = {"W1": W1,
-                  "W2": W2}
-
-    return parameters
+def sgn(x):
+    return 1 if x > 0 else -1
 
 
-def forward_propagation(X, parameters):
-    W1 = parameters.get("W1")
-    W2 = parameters.get("W2")
+def vectorized_sgn(X):
+    return np.vectorize(sgn)(X)
 
-    Z1 = np.dot(W1, X)
-    A1 = np.tanh(Z1)
-    Z2 = np.dot(W2, A1)
-    A2 = sigmoid(Z2)
 
-    cache = {"Z1": Z1,
-             "A1": A1,
-             "Z2": Z2,
-             "A2": A2}
+def get_key_from_weights(W):
+    return np.sum((W), axis=1)
 
-    return A2, cache
+
+def hebian_rule(O, Y, L, W, X):
+    if O * Y > 0:
+        W = W - O * X
+    if np.abs(W) > L:
+        W = sgn(W) * L
+
+    return W
+
+
+def vectorized_hebian_rule(O, Y, L, W, X):
+    for i in range(0, X.shape[0]):
+        for j in range(0, X.shape[1]):
+            W[i][j] = hebian_rule(O, Y[i], L, W[i][j], X[i][j])
+
+    return W
+
+
+def initialize_parameters(X, L):
+    return np.random.randint(-L, L + 1, X.shape)
+
+
+def forward_propagation(X, W):
+    Z1 = np.sum((W * X), axis=1)
+    Y = vectorized_sgn(Z1)
+    O = np.prod(Y)
+
+    cache = {
+        "Y": Y,
+        "O": O
+    }
+
+    return O, cache
 
 
 def compute_cost(A2, Y):
@@ -48,78 +66,38 @@ def compute_cost(A2, Y):
     return cost
 
 
-def backward_propagation(parameters, cache, X, Y):
-    m = X.shape[0]
-    W2 = parameters["W2"]
-    A1 = cache["A1"]
-    A2 = cache["A2"]
+def update_parameters(W, X, L, cache):
+    Y = cache.get("Y")
+    O = cache.get("O")
 
-    dZ2 = A2 - Y
-    dW2 = np.dot(dZ2, A1.T) / m
-    db2 = np.sum(dZ2, axis=1, keepdims=True) / m
-    dZ1 = np.dot(W2.T, dZ2) * (1 - np.power(A1, 2))
-    dW1 = np.dot(dZ1, X.T) / m
-    db1 = np.sum(dZ1, axis=1, keepdims=True) / m
+    W = vectorized_hebian_rule(O, Y, L, W, X)
 
-    grads = {"dW1": dW1,
-             "db1": db1,
-             "dW2": dW2,
-             "db2": db2}
-
-    return grads
+    return W
 
 
-def update_parameters(parameters, grads, learning_rate=1.2):
-    W1 = parameters.get("W1")
-    b1 = parameters.get("b1")
-    W2 = parameters.get("W2")
-    b2 = parameters.get("b2")
+def nn_model(X, L):
+    W1 = initialize_parameters(X, L)
+    W2 = initialize_parameters(X, L)
+    O1, cache1 = forward_propagation(X, W1)
+    O2, cache2 = forward_propagation(X, W2)
+    while O1 != O2:
+        if O1 * O2 < 0:
+            W1 = update_parameters(W1, X, L, cache1)
+            W2 = update_parameters(W2, X, L, cache2)
+        O1, cache1 = forward_propagation(X, W1)
+        print("O1 = {}".format(O1))
+        O2, cache2 = forward_propagation(X, W2)
+        print("O2 = {}".format(O2))
 
-    dW1 = grads["dW1"]
-    db1 = grads["db1"]
-    dW2 = grads["dW2"]
-    db2 = grads["db2"]
-
-    W1 = W1 - learning_rate * dW1
-    b1 = b1 - learning_rate * db1
-    W2 = W2 - learning_rate * dW2
-    b2 = b2 - learning_rate * db2
-
-    parameters = {"W1": W1,
-                  "b1": b1,
-                  "W2": W2,
-                  "b2": b2}
-
-    return parameters
+    return W1, W2, O1, O2
 
 
-def compute_iteration(X, current_Y, desired_Y, parameters):
-    A2, cache = forward_propagation(X, parameters)
+K = 3
+N = 5
+L = 3
 
-    cost = compute_cost(A2, desired_Y)
-    print("Cost now = {}".format(cost))
-
-    if cost.any() > 0:
-        grads = backward_propagation(parameters, cache, X, desired_Y)
-        parameters = update_parameters(parameters, grads)
-
-    current_Y = A2
-    return current_Y, parameters
-
-
-def nn_model(X, n_y, n_h, num_iterations=1000, print_cost=False):
-    n_x = X.shape[0]
-
-    parameters_for_first_thread = initialize_parameters(n_x, n_h, n_y)
-    parameters_for_second_thread = initialize_parameters(n_x, n_h, n_y)
-
-    Y1, cache = forward_propagation(X, parameters_for_first_thread)
-    Y2, cache = forward_propagation(X, parameters_for_second_thread)
-    for i in range(0, num_iterations):
-        Y1, parameters_for_first_thread = compute_iteration(X, Y1, Y2, parameters_for_first_thread)
-        Y2, parameters_for_second_thread = compute_iteration(X, Y2, Y1, parameters_for_second_thread)
-    return parameters_for_first_thread, parameters_for_second_thread, Y1, Y2
-
-
-model = nn_model(np.random.choice([-1, 1], (5, 2)), 4, 2)
-print(model)
+W1, W2, O1, O2 = nn_model(np.random.choice([-1, 1], (K, N)), L)
+print("W1 = {}".format(W1))
+print("W2 = {}".format(W2))
+print("O1 = {}".format(O1))
+print("O2 = {}".format(O2))
