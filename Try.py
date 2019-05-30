@@ -38,8 +38,8 @@ def vectorized_hebian_rule(O, Y, L, W, X):
     return W
 
 
-def initialize_parameters(X, L):
-    return np.random.randint(-L, L + 1, X.shape)
+def initialize_parameters(shape, L):
+    return np.random.randint(-L, L + 1, shape)
 
 
 def forward_propagation(X, W):
@@ -75,19 +75,23 @@ def update_parameters(W, X, L, cache):
     return W
 
 
-def nn_model(X, L):
-    W1 = initialize_parameters(X, L)
-    W2 = initialize_parameters(X, L)
-    O1, cache1 = forward_propagation(X, W1)
-    O2, cache2 = forward_propagation(X, W2)
-    while O1 != O2:
+def nn_model(K, N, L):
+    O1 = 0
+    O2 = 0
+    W1 = initialize_parameters((K, N), L)
+    W2 = initialize_parameters((K, N), L)
+    for i in range(0, 100000):
+        X = np.random.choice([-1, 1], (K, N))
+        O1, cache1 = forward_propagation(X, W1)
+        O2, cache2 = forward_propagation(X, W2)
         if O1 * O2 < 0:
             W1 = update_parameters(W1, X, L, cache1)
             W2 = update_parameters(W2, X, L, cache2)
-        O1, cache1 = forward_propagation(X, W1)
-        print("O1 = {}".format(O1))
-        O2, cache2 = forward_propagation(X, W2)
-        print("O2 = {}".format(O2))
+
+        if i % 1000 == 0:
+            print("i = {}".format(i))
+            print("W1 = {}".format(W1))
+            print("W2 = {}".format(W2))
 
     return W1, W2, O1, O2
 
@@ -96,7 +100,7 @@ K = 3
 N = 5
 L = 3
 
-W1, W2, O1, O2 = nn_model(np.random.choice([-1, 1], (K, N)), L)
+W1, W2, O1, O2 = nn_model(K, N, L)
 print("W1 = {}".format(W1))
 print("W2 = {}".format(W2))
 print("O1 = {}".format(O1))
