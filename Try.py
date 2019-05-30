@@ -115,21 +115,27 @@ def compute_iteration(X, desired_Y, parameters, i):
     return A2, parameters
 
 
-def nn_model(X, n_y, n_h, num_iterations=100000):
-    n_x = X.shape[0]
-
+def nn_model(n_x, n_y, n_h, num_iterations=10000000):
     parameters_for_first_thread = initialize_parameters(n_x, n_h, n_y)
     parameters_for_second_thread = initialize_parameters(n_x, n_h, n_y)
-
+    X = np.random.randn(n_x, n_h)
     Y1, cache = forward_propagation(X, parameters_for_first_thread)
     Y2, cache = forward_propagation(X, parameters_for_second_thread)
     for i in range(0, num_iterations):
+        X = np.random.randn(n_x, n_h)
         Y1, parameters_for_first_thread = compute_iteration(X, Y2, parameters_for_first_thread, i)
         Y2, parameters_for_second_thread = compute_iteration(X, Y1, parameters_for_second_thread, i)
+        if i % 10000 == 0:
+            print("i = {}".format(i))
+            print("Y1 = {}".format(Y1))
+            print("Y2 = {}".format(Y2))
+            print("PARAMS1 = {}".format(parameters_for_first_thread))
+            print("PARAMS2 = {}".format(parameters_for_second_thread))
+
     return parameters_for_first_thread, parameters_for_second_thread, Y1, Y2
 
 
-parameters_for_first_thread, parameters_for_second_thread, Y1, Y2 = nn_model(np.random.randn(5, 3), 1, 3)
+parameters_for_first_thread, parameters_for_second_thread, Y1, Y2 = nn_model(5, 1, 3)
 print("Y1 result value = {}".format(Y1))
 print("Y2 result value = {}".format(Y2))
 print("Param1 result value = {}".format(parameters_for_first_thread))
