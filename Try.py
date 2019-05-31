@@ -78,7 +78,7 @@ def backward_propagation(parameters, cache, X, Y):
     return grads
 
 
-def update_parameters(parameters, grads, learning_rate=1.2):
+def update_parameters(parameters, grads, learning_rate=0.8):
     W1 = parameters.get("W1")
     b1 = parameters.get("b1")
     W2 = parameters.get("W2")
@@ -106,7 +106,7 @@ def compute_iteration(X, desired_Y, parameters, i):
     A2, cache = forward_propagation(X, parameters)
 
     cost = compute_cost(A2, desired_Y)
-    if i % 1000 == 0:
+    if i % 100000 == 0:
         print("Cost after iteration %i: %f" % (i, cost))
 
     grads = backward_propagation(parameters, cache, X, desired_Y)
@@ -115,7 +115,7 @@ def compute_iteration(X, desired_Y, parameters, i):
     return A2, parameters
 
 
-def nn_model(n_x, n_y, n_h, num_iterations=10000000):
+def nn_model(n_x, n_y, n_h, num_iterations=333333333):
     parameters_for_first_thread = initialize_parameters(n_x, n_h, n_y)
     parameters_for_second_thread = initialize_parameters(n_x, n_h, n_y)
     X = np.random.randn(n_x, n_h)
@@ -125,7 +125,7 @@ def nn_model(n_x, n_y, n_h, num_iterations=10000000):
         X = np.random.randn(n_x, n_h)
         Y1, parameters_for_first_thread = compute_iteration(X, Y2, parameters_for_first_thread, i)
         Y2, parameters_for_second_thread = compute_iteration(X, Y1, parameters_for_second_thread, i)
-        if i % 10000 == 0:
+        if i % 100000 == 0:
             print("i = {}".format(i))
             print("Y1 = {}".format(Y1))
             print("Y2 = {}".format(Y2))
