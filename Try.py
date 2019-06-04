@@ -84,7 +84,7 @@ def nn_model(K, N, L):
         X = np.random.choice([-1, 1], (K, N))
         O1, cache1 = forward_propagation(X, W1)
         O2, cache2 = forward_propagation(X, W2)
-        if O1 * O2 < 0:
+        if O1 == O2:
             W1 = update_parameters(W1, X, L, cache1)
             W2 = update_parameters(W2, X, L, cache2)
 
